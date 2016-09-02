@@ -1,7 +1,7 @@
 numberOfPositiveImages = 3;
 numberOfNegativeImages = 4;
 
-// HELPER FUNCTIONS
+// IMAGE HELPER FUNCTIONS
 function loadSingleImage(imageType, index){
   return new Promise(function(resolve, reject){
     var img = new Image();
@@ -29,82 +29,104 @@ function loadImages(numberOfImages, imageType){
     });
 }
 
-function randStartingXcoord(imgWidth){
-  var min = 10;
-  var max = canvas.width - imgWidth - 10;
+function randStartingXcoord(canvas, imgDim){
+
+  var min = imgDim;
+  var max = canvas.getWidth() - imgDim - 10;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randStartingYcoord(imgHeight){
-  var min = 10;
-  var max = canvas.height - imgHeight - 10;
+function randStartingYcoord(canvas, imgDim){
+  var min = imgDim;
+  var max = canvas.getHeight() - imgDim - 10;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function drawText(canvas, ctx){
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "#d9d9d9";
-  ctx.textAlign = "center";
-  ctx.fillText("Hire as many good employees as possible", canvas.width/2, canvas.height/2);
-
-  ctx.font = "15px Arial";
-  ctx.fillStyle = "#bfbfbf";
-  ctx.textAlign = "center";
-  ctx.fillText("(Click to hire)", canvas.width/2, canvas.height/2 + 20);
-
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "#d9d9d9";
-  ctx.textAlign = "right";
-  ctx.fillText("Score: ", canvas.width - 100, 30);
+function randDegree(){
+  return Math.random() * (360 - 0 + 1);
 }
+
+function randScale(canvas, img){
+  var scale = (Math.random() * (8 - 1 + 1) + 1)/10;
+  while(img.height * scale> canvas.getHeight() || img.width * scale > canvas.getWidth()){
+    scale = (Math.random() * (8 - 1 + 1) + 1)/10;
+  }
+  return scale;
+}
+
+function getSizingDim(img){
+  if(img.width > img.height){
+    return img.width;
+  }
+  return img.height;
+}
+// function drawText(canvas){
+//   ctx.font = "20px Arial";
+//   ctx.fillStyle = "#d9d9d9";
+//   ctx.textAlign = "center";
+//   ctx.fillText("Hire as many good employees as possible", canvas.width/2, canvas.height/2);
+//
+//   ctx.font = "15px Arial";
+//   ctx.fillStyle = "#bfbfbf";
+//   ctx.textAlign = "center";
+//   ctx.fillText("(Click to hire)", canvas.width/2, canvas.height/2 + 20);
+//
+//   ctx.font = "20px Arial";
+//   ctx.fillStyle = "#d9d9d9";
+//   ctx.textAlign = "right";
+//   ctx.fillText("Score: ", canvas.width - 100, 30);
+// }
+
+
 
 // inputs: image, optional: specific width to set, specific height to set,
 // custom x coordinate to start at, custom y coordinate to start at
 // returns: nothing
 // expected outcome: draws the inputted image on the canvas
-function drawImg(ctx, img, w ,h ,x ,y){
+function drawImg(canvas, img, w ,h ,x ,y){
   // create the intial image
   function imgInit(){
-    var randScale = (Math.random() * (3 - .5 + 1) + .5)/10;
+    var scale = randScale(canvas, img);
+    var biggestDim = getSizingDim(img);
     if(null == w){
-      w = randScale;
+      w = scale;
     }
     if(null == h){
-      h = randScale;
+      h = scale;
     }
     if(null == x){
-      x = randStartingXcoord(img.width * w);
+      x = randStartingXcoord(canvas, biggestDim * w);
     }
     if(null == y){
-      y = randStartingYcoord(img.height * h);
+      y = randStartingYcoord(canvas, biggestDim * h);
     }
-    ctx.drawImage(img,x,y, img.width * w, img.height * h);
 
-    // img.onload = function(){
-    //   ctx.drawImage(img,x,y, img.width * w, img.height * h);
-    // }
+    var newImage = new fabric.Image(img, {
+      centeredScaling: true,
+      selectable: false,
+      left:x,
+      top:y,
+      scaleX: scale,
+      scaleY: scale,
+      angle: randDegree()
+    });
+    canvas.add(newImage);
+    canvas.renderAll();
   }
   imgInit();
-
-  // create the movement of the image
-  function movement(){
-
-  }
-  setInterval(movement, 10);
 }
 
-function randImgGeneration(ctx, imageSet){
+function randImgGeneration(canvas, imageSet){
   var min = 0;
   var max = imageSet.length-1;
   var choice = Math.floor(Math.random() * (max - min + 1)) + min;
-  drawImg(ctx, imageSet[choice]);
+  drawImg(canvas, imageSet[choice]);
 }
 
-// GAME CODE
+/****************** GAME CODE ********************/
 function gameInit() {
   // get all resources
-  var canvas = document.getElementById('canvas');
-  var ctx = canvas.getContext('2d');
+  var canvas = new fabric.Canvas('canvas');
   var positiveImages = loadImages(numberOfPositiveImages, "pizza");
   var negativeImages = loadImages(numberOfNegativeImages, "animal");
   var imageLoader = [positiveImages, negativeImages];
@@ -115,26 +137,27 @@ function gameInit() {
     // resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
     function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            /**
-             * Your drawings need to be inside this function otherwise they will be reset when
-             * you resize the browser window and the canvas goes will be cleared.
-             */
-            playGame(canvas, ctx, positiveImages, negativeImages);
+        canvas.clear();
+        canvas.setDimensions({width:window.innerWidth, height:window.innerHeight});
+        canvas.calcOffset();
+        /**
+         * Your drawings need to be inside this function otherwise they will be reset when
+         * you resize the browser window and the canvas goes will be cleared.
+         */
+        playGame(canvas, positiveImages, negativeImages);
     }
     resizeCanvas();
   });
 }
 
 // where all canvas activity should go in order to maintain resizability
-function playGame(canvas, ctx, positiveImages, negativeImages) {
-  drawText(canvas, ctx);
+function playGame(canvas, positiveImages, negativeImages) {
+  //drawText(canvas);
   // number of random images to generate
-  var maxImgs = 2;
+  var maxImgs = 5;
   for(i=0; i<maxImgs; i++){
-    randImgGeneration(ctx, positiveImages);
-    randImgGeneration(ctx, negativeImages);
+    randImgGeneration(canvas, positiveImages);
+    randImgGeneration(canvas, negativeImages);
   }
 }
 
