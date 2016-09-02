@@ -54,12 +54,19 @@ function randScale(canvas, img){
   return scale;
 }
 
-function getSizingDim(img){
+function getSizingDim(img, scale){
+  if(scale){
+    if(img.width > img.height){
+      return img.width * scale;
+    }
+    return img.height * scale;
+  }
   if(img.width > img.height){
     return img.width;
   }
   return img.height;
 }
+
 // function drawText(canvas){
 //   ctx.font = "20px Arial";
 //   ctx.fillStyle = "#d9d9d9";
@@ -84,8 +91,6 @@ function getSizingDim(img){
 // returns: nothing
 // expected outcome: draws the inputted image on the canvas
 function drawImg(canvas, img, w ,h ,x ,y){
-  // create the intial image
-  function imgInit(){
     var scale = randScale(canvas, img);
     var biggestDim = getSizingDim(img);
     if(null == w){
@@ -103,7 +108,10 @@ function drawImg(canvas, img, w ,h ,x ,y){
 
     var newImage = new fabric.Image(img, {
       centeredScaling: true,
+      centeredRotation: true,
+      hasControls: false,
       selectable: false,
+      hoverCursor: "pointer",
       left:x,
       top:y,
       scaleX: scale,
@@ -111,9 +119,39 @@ function drawImg(canvas, img, w ,h ,x ,y){
       angle: randDegree()
     });
     canvas.add(newImage);
+
+    var walls = {
+      top: 0,
+      right: canvas.getWidth(),
+      bottom: canvas.getHeight(),
+      left:0
+    }
+    var scaleSwitch = true;
+    var scaleSize = randScale(canvas, img);
+    var animationScale = "-=" + scaleSize;
+    function bounceLeft(){
+      var newx = randStartingXcoord(canvas, getSizingDim(newImage, scale));
+      var newy = randStartingYcoord(canvas, getSizingDim(newImage, scale));
+
+      if(scaleSwitch){
+        animationScale = "+=" + scaleSize;
+        scaleSwitch = false;
+      }
+      else{
+        animationScale = "-=" + scaleSize;
+        scaleSwitch = true;
+      }
+
+      var randDuration = Math.floor(Math.random() * (4000 - 1000 + 1)) + 1000;
+      newImage.animate({left: newx, top: newy, angle: '+=45', scaleX:animationScale, scaleY: animationScale},{
+        onChange:canvas.renderAll.bind(canvas),
+        duration: randDuration,
+        easing: fabric.util.ease.easeInCubic,
+        onComplete: bounceLeft
+      });
+    }
+    bounceLeft();
     canvas.renderAll();
-  }
-  imgInit();
 }
 
 function randImgGeneration(canvas, imageSet){
