@@ -1,5 +1,5 @@
 canvas = null;
-numberOfPositiveImages = 3;
+numberOfPositiveImages = 5;
 numberOfNegativeImages = 4;
 positiveImages = null;
 negativeImages = null;
@@ -252,7 +252,7 @@ function randImgGeneration(imageSet, isGood){
 function gameInit() {
   // get all resources
   canvas = new fabric.Canvas('canvas');
-  positiveImages = loadImages(numberOfPositiveImages, "pizza");
+  positiveImages = loadImages(numberOfPositiveImages, "face");
   negativeImages = loadImages(numberOfNegativeImages, "animal");
   closeImage = loadImages(1, "close");
   var imageLoader = [positiveImages, negativeImages, closeImage];
