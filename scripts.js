@@ -1,5 +1,11 @@
+canvas = null;
 numberOfPositiveImages = 3;
 numberOfNegativeImages = 4;
+positiveImages = null;
+negativeImages = null;
+score = 0;
+scoreObj = null;
+
 
 // IMAGE HELPER FUNCTIONS
 function loadSingleImage(imageType, index){
@@ -29,14 +35,14 @@ function loadImages(numberOfImages, imageType){
     });
 }
 
-function randStartingXcoord(canvas, imgDim){
+function randStartingXcoord(imgDim){
 
   var min = imgDim;
   var max = canvas.getWidth() - imgDim - 10;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randStartingYcoord(canvas, imgDim){
+function randStartingYcoord(imgDim){
   var min = imgDim;
   var max = canvas.getHeight() - imgDim - 10;
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -46,7 +52,7 @@ function randDegree(){
   return Math.random() * (360 - 0 + 1);
 }
 
-function randScale(canvas, img){
+function randScale(img){
   var scale = (Math.random() * (8 - 1 + 1) + 1)/10;
   while(img.height * scale> canvas.getHeight() || img.width * scale > canvas.getWidth()){
     scale = (Math.random() * (8 - 1 + 1) + 1)/10;
@@ -67,31 +73,54 @@ function getSizingDim(img, scale){
   return img.height;
 }
 
-// function drawText(canvas){
-//   ctx.font = "20px Arial";
-//   ctx.fillStyle = "#d9d9d9";
-//   ctx.textAlign = "center";
-//   ctx.fillText("Hire as many good employees as possible", canvas.width/2, canvas.height/2);
-//
-//   ctx.font = "15px Arial";
-//   ctx.fillStyle = "#bfbfbf";
-//   ctx.textAlign = "center";
-//   ctx.fillText("(Click to hire)", canvas.width/2, canvas.height/2 + 20);
-//
-//   ctx.font = "20px Arial";
-//   ctx.fillStyle = "#d9d9d9";
-//   ctx.textAlign = "right";
-//   ctx.fillText("Score: ", canvas.width - 100, 30);
-// }
+function changeScore(){
+  var scoretext = "Score: " + score;
+  return scoreObj.setText(scoretext);
+}
 
+function drawText(){
+  var instructions = new fabric.Text('Hire as many good employees as possible\n(Click to hire)',
+  {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: "#d9d9d9",
+      textAlign: "center",
+      selectable: false
+  });
+
+  scoreObj = new fabric.Text('Score:',
+  {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: "#d9d9d9",
+      textAlign: "right",
+      left: canvas.getWidth() - 100,
+      top: 30
+  });
+  canvas.add(instructions, scoreObj);
+  canvas.centerObject(instructions);
+  canvas.renderAll();
+  return instructions;
+}
+
+function adjustGame(isGood){
+  if(isGood){
+    score++;
+
+  }
+  else{
+    score--;
+  }
+  changeScore();
+}
 
 
 // inputs: image, optional: specific width to set, specific height to set,
-// custom x coordinate to start at, custom y coordinate to start at
+// custom x coordinate to start at, custom y coordinate to start at,
 // returns: nothing
 // expected outcome: draws the inputted image on the canvas
-function drawImg(canvas, img, w ,h ,x ,y){
-    var scale = randScale(canvas, img);
+function drawImg(img, isGood, w ,h ,x ,y){
+    var scale = randScale(img);
     var biggestDim = getSizingDim(img);
     if(null == w){
       w = scale;
@@ -100,23 +129,27 @@ function drawImg(canvas, img, w ,h ,x ,y){
       h = scale;
     }
     if(null == x){
-      x = randStartingXcoord(canvas, biggestDim * w);
+      x = randStartingXcoord(biggestDim * w);
     }
     if(null == y){
-      y = randStartingYcoord(canvas, biggestDim * h);
+      y = randStartingYcoord(biggestDim * h);
     }
 
     var newImage = new fabric.Image(img, {
       centeredScaling: true,
       centeredRotation: true,
       hasControls: false,
-      selectable: false,
+      hasBorders: false,
       hoverCursor: "pointer",
       left:x,
       top:y,
       scaleX: scale,
       scaleY: scale,
       angle: randDegree()
+    });
+    newImage.on('selected', function(){
+      adjustGame(isGood);
+      canvas.getActiveObject().remove();
     });
     canvas.add(newImage);
 
@@ -127,11 +160,11 @@ function drawImg(canvas, img, w ,h ,x ,y){
       left:0
     }
     var scaleSwitch = true;
-    var scaleSize = randScale(canvas, img);
+    var scaleSize = randScale(img);
     var animationScale = "-=" + scaleSize;
-    function bounceLeft(){
-      var newx = randStartingXcoord(canvas, getSizingDim(newImage, scale));
-      var newy = randStartingYcoord(canvas, getSizingDim(newImage, scale));
+    function bounce(){
+      var newx = randStartingXcoord(getSizingDim(newImage, scale));
+      var newy = randStartingYcoord(getSizingDim(newImage, scale));
 
       if(scaleSwitch){
         animationScale = "+=" + scaleSize;
@@ -147,26 +180,26 @@ function drawImg(canvas, img, w ,h ,x ,y){
         onChange:canvas.renderAll.bind(canvas),
         duration: randDuration,
         easing: fabric.util.ease.easeInCubic,
-        onComplete: bounceLeft
+        onComplete: bounce
       });
     }
-    bounceLeft();
+    bounce();
     canvas.renderAll();
 }
 
-function randImgGeneration(canvas, imageSet){
+function randImgGeneration(imageSet, isGood){
   var min = 0;
   var max = imageSet.length-1;
   var choice = Math.floor(Math.random() * (max - min + 1)) + min;
-  drawImg(canvas, imageSet[choice]);
+  drawImg(imageSet[choice], isGood);
 }
 
 /****************** GAME CODE ********************/
 function gameInit() {
   // get all resources
-  var canvas = new fabric.Canvas('canvas');
-  var positiveImages = loadImages(numberOfPositiveImages, "pizza");
-  var negativeImages = loadImages(numberOfNegativeImages, "animal");
+  canvas = new fabric.Canvas('canvas');
+  positiveImages = loadImages(numberOfPositiveImages, "pizza");
+  negativeImages = loadImages(numberOfNegativeImages, "animal");
   var imageLoader = [positiveImages, negativeImages];
   Promise.all(imageLoader).then(function(images){
     positiveImages = images[0];
@@ -182,22 +215,24 @@ function gameInit() {
          * Your drawings need to be inside this function otherwise they will be reset when
          * you resize the browser window and the canvas goes will be cleared.
          */
-        playGame(canvas, positiveImages, negativeImages);
+        playGame();
     }
     resizeCanvas();
   });
 }
 
 // where all canvas activity should go in order to maintain resizability
-function playGame(canvas, positiveImages, negativeImages) {
-  //drawText(canvas);
+function playGame() {
+  var feedback = drawText();
+  // feedback.setText("Good job");
+  // canvas.centerObject(feedback);
   // number of random images to generate
-  var maxImgs = 5;
+  var maxImgs = 2;
   for(i=0; i<maxImgs; i++){
-    randImgGeneration(canvas, positiveImages);
-    randImgGeneration(canvas, negativeImages);
+    randImgGeneration(positiveImages, true);
+    randImgGeneration(negativeImages, false);
   }
 }
 
-//window.onload = new Konami(playGame);
+//window.onload = new Konami(gameInit);
 window.onload = gameInit;
