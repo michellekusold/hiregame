@@ -9,7 +9,29 @@ score = null;
 scoreObj = null;
 closeObj = null;
 closeImage = null;
+feedback = null;
 
+goodMessages = [
+  "Your new employee created cohesive branding for your project. +1",
+  "Your new employee did user testing to improve UX. +1",
+  "Your new employee is good at making puns. +1",
+  "Your new employee coded faster than the speed of light. +1",
+  "Your new employee comes to work looking spiffy. +1",
+  "Your new employee utilizes Sass to slay visual inconsistencies. +1",
+  "Your new employee bikes uphill to work both ways. +1",
+  "Your new employee squashes bugs with unit testing. +1"
+];
+
+badMessages = [
+  "Your new employee isn't potty trained. -1",
+  "Your new employee codes by walking across the keyboard. Bugs were created. -1",
+  "Your new employee has a low life expectancy. (Is the health insurance worth it?) -1",
+  "Your new employee contracted fleas. The bugs spread into the code. -1",
+  "Your new employee is a catty communicater. They always have a bone to pick with someone. -1",
+  "Your new employee doesn't speak human. Their code comments are indecipherable. -1",
+  "Your new employee licked the outlet. -1",
+  "Hair everywhere. -1"
+];
 
 // IMAGE HELPER FUNCTIONS
 function loadSingleImage(imageType, index){
@@ -109,6 +131,9 @@ function changeScore(){
   if(score >=10){
     winGame();
   }
+  if(score <=-5){
+    score = -4;
+  }
   return scoreObj.setText(scoretext);
 }
 
@@ -143,9 +168,12 @@ function drawText(){
 }
 
 function adjustGame(isGood){
+  var randMessage = Math.floor(Math.random() * (8));
   if(isGood){
     activePositiveImages--;
     score++;
+    feedback.setText(goodMessages[randMessage]);
+    console.log(activePositiveImages);
     if(activePositiveImages < 2){
       for(var i=0; i<2; i++){
         randImgGeneration(positiveImages, true);
@@ -156,14 +184,16 @@ function adjustGame(isGood){
   else{
     activeNegativeImages--;
     score--;
+    feedback.setText(badMessages[randMessage]);
     if(activeNegativeImages < 2){
       for(var i=0; i<2; i++){
         randImgGeneration(negativeImages, false);
         activeNegativeImages++;
       }
     }
-
   }
+  feedback.sendToBack();
+  canvas.centerObject(feedback);
   changeScore();
 }
 
@@ -303,9 +333,7 @@ function playGame() {
   canvas.renderAll();
 
 
-  var feedback = drawText();
-  // feedback.setText("Good job");
-  // canvas.centerObject(feedback);
+  feedback = drawText();
   // number of random images to generate
   var maxImgs = 3;
   for(i=0; i<maxImgs; i++){
