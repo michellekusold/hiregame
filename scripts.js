@@ -7,6 +7,8 @@ activePositiveImages = 0;
 activeNegativeImages = 0;
 score = null;
 scoreObj = null;
+closeObj = null;
+closeImage = null;
 
 
 // IMAGE HELPER FUNCTIONS
@@ -38,7 +40,6 @@ function loadImages(numberOfImages, imageType){
 }
 
 function randStartingXcoord(imgDim){
-
   var min = imgDim;
   var max = canvas.getWidth() - imgDim - 10;
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -75,11 +76,39 @@ function getSizingDim(img, scale){
   return img.height;
 }
 
+function winGame(){
+  var modal = new fabric.Rect({
+    selectable: false,
+    fill: 'white',
+    opacity: 1,
+    width: canvas.getWidth() * .9,
+    height: canvas.getHeight()*.3
+  });
+
+  var message = new fabric.Text("Hey, you're really good at this.\nIf you want, you can make this game a reality by calling me at\n (440) 665-2581\n\nThanks for playing :)",
+  {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: "black",
+      textAlign: "center",
+      selectable: false
+  });
+  canvas.add(modal, message);
+  canvas.centerObject(modal);
+  canvas.centerObject(message);
+  canvas.bringToFront(closeObj);
+  canvas.renderAll();
+
+}
+
 function changeScore(){
   if(!score){
     score = 0;
   }
   var scoretext = "Score: " + score;
+  if(score >=10){
+    winGame();
+  }
   return scoreObj.setText(scoretext);
 }
 
@@ -108,6 +137,7 @@ function drawText(){
   });
   canvas.add(instructions, scoreObj);
   canvas.centerObject(instructions);
+  canvas.bringToFront(closeObj);
   canvas.renderAll();
   return instructions;
 }
@@ -207,6 +237,7 @@ function drawImg(img, isGood, w ,h ,x ,y){
       });
     }
     bounce();
+    canvas.bringToFront(closeObj);
     canvas.renderAll();
 }
 
@@ -223,10 +254,12 @@ function gameInit() {
   canvas = new fabric.Canvas('canvas');
   positiveImages = loadImages(numberOfPositiveImages, "pizza");
   negativeImages = loadImages(numberOfNegativeImages, "animal");
-  var imageLoader = [positiveImages, negativeImages];
+  closeImage = loadImages(1, "close");
+  var imageLoader = [positiveImages, negativeImages, closeImage];
   Promise.all(imageLoader).then(function(images){
     positiveImages = images[0];
     negativeImages = images[1];
+    closeImage = images[2][0];
 
     // resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
@@ -246,6 +279,24 @@ function gameInit() {
 
 // where all canvas activity should go in order to maintain resizability
 function playGame() {
+  closeObj = new fabric.Image(closeImage, {
+    hasControls: false,
+    hasBorders: false,
+    top: 10,
+    left: 10,
+    scaleX: .3,
+    scaleY: .3,
+    hoverCursor: "pointer"
+  });
+  closeObj.on('selected', function(){
+    canvas.clear();
+  });
+  // console.log(closeObj);
+  canvas.add(closeObj);
+  canvas.bringToFront(closeObj);
+  canvas.renderAll();
+
+
   var feedback = drawText();
   // feedback.setText("Good job");
   // canvas.centerObject(feedback);
