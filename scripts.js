@@ -290,6 +290,12 @@ function playGame() {
   });
   closeObj.on('selected', function(){
     canvas.clear();
+    var c = document.getElementById("canvas");
+    var c2 = document.getElementsByClassName("upper-canvas")[0];
+    var parent = document.getElementsByClassName("canvas-container")[0];
+    parent.removeChild(c2);
+    parent.removeChild(c);
+    parent.parentNode.removeChild(parent);
   });
   // console.log(closeObj);
   canvas.add(closeObj);
@@ -310,5 +316,21 @@ function playGame() {
   }
 }
 
-//window.onload = new Konami(gameInit);
-window.onload = gameInit;
+window.onload = new Konami(function(){
+  canvas = null;
+  numberOfPositiveImages = 3;
+  numberOfNegativeImages = 4;
+  positiveImages = null;
+  negativeImages = null;
+  activePositiveImages = 0;
+  activeNegativeImages = 0;
+  score = null;
+  scoreObj = null;
+  closeObj = null;
+  closeImage = null;
+  var c = document.createElement('canvas');
+  c.id="canvas";
+  document.body.appendChild(c);
+  gameInit();
+});
+//window.onload = gameInit;
