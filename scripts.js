@@ -173,7 +173,6 @@ function adjustGame(isGood){
     activePositiveImages--;
     score++;
     feedback.setText(goodMessages[randMessage]);
-    console.log(activePositiveImages);
     if(activePositiveImages < 2){
       for(var i=0; i<2; i++){
         randImgGeneration(positiveImages, true);
@@ -327,7 +326,6 @@ function playGame() {
     parent.removeChild(c);
     parent.parentNode.removeChild(parent);
   });
-  // console.log(closeObj);
   canvas.add(closeObj);
   canvas.bringToFront(closeObj);
   canvas.renderAll();
