@@ -3,7 +3,9 @@ numberOfPositiveImages = 3;
 numberOfNegativeImages = 4;
 positiveImages = null;
 negativeImages = null;
-score = 0;
+activePositiveImages = 0;
+activeNegativeImages = 0;
+score = null;
 scoreObj = null;
 
 
@@ -74,6 +76,9 @@ function getSizingDim(img, scale){
 }
 
 function changeScore(){
+  if(!score){
+    score = 0;
+  }
   var scoretext = "Score: " + score;
   return scoreObj.setText(scoretext);
 }
@@ -88,7 +93,11 @@ function drawText(){
       selectable: false
   });
 
-  scoreObj = new fabric.Text('Score:',
+  var scoreText = "Score: ";
+  if(score){
+    scoreText += score;
+  }
+  scoreObj = new fabric.Text(scoreText,
   {
       fontFamily: 'Arial',
       fontSize: 20,
@@ -105,11 +114,25 @@ function drawText(){
 
 function adjustGame(isGood){
   if(isGood){
+    activePositiveImages--;
     score++;
-
+    if(activePositiveImages < 2){
+      for(var i=0; i<2; i++){
+        randImgGeneration(positiveImages, true);
+        activePositiveImages++;
+      }
+    }
   }
   else{
+    activeNegativeImages--;
     score--;
+    if(activeNegativeImages < 2){
+      for(var i=0; i<2; i++){
+        randImgGeneration(negativeImages, false);
+        activeNegativeImages++;
+      }
+    }
+
   }
   changeScore();
 }
@@ -227,10 +250,12 @@ function playGame() {
   // feedback.setText("Good job");
   // canvas.centerObject(feedback);
   // number of random images to generate
-  var maxImgs = 2;
+  var maxImgs = 3;
   for(i=0; i<maxImgs; i++){
     randImgGeneration(positiveImages, true);
+    activePositiveImages++;
     randImgGeneration(negativeImages, false);
+    activeNegativeImages++;
   }
 }
 
